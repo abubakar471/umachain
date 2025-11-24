@@ -5,7 +5,7 @@ import React from 'react'
 const Hero = () => {
     return (
         <div className='max-w-7xl mx-auto py-20'>
-            <div className='bg-white/20 backdrop-blur-md rounded-full shadow w-fit px-6 mx-auto flex items-center gap-x-2'>
+            <div className='hidden lg:flex text-center bg-black/5 backdrop:blur-xs rounded-full shadow w-fit px-6 mx-auto items-center gap-x-2'>
                 <div className='text-[#b6ab4e] text-2xl'>
                     ***
                 </div>
