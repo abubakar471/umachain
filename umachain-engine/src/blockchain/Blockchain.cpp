@@ -1,6 +1,8 @@
 #include "Blockchain.h"
 #include <fstream>
 #include <ctime>
+#include <sstream>
+#include<iostream>
 
 Blockchain::Blockchain()
 {
@@ -16,7 +18,7 @@ Blockchain::Blockchain()
 
 Block Blockchain::createGenesisBlock()
 {
-    return Block(0, "2025-25-11", "Genesis Block", "0");
+    return Block(0, "2025-25-11", {}, "0");
 }
 
 Block Blockchain::getLatestBlock()
@@ -24,8 +26,27 @@ Block Blockchain::getLatestBlock()
     return chain.back();
 }
 
-void Blockchain::addBlock(const std::string &data)
+// -----------------------------------
+//      Add transaction to mempool
+// -----------------------------------
+
+void Blockchain::addTransaction(const Transaction &tx)
 {
+    mempool.push_back(tx);
+}
+
+// -----------------------------------------------------
+//      Mine block containing all transaction in mempool
+// -----------------------------------------------------
+
+void Blockchain::minePendingTransaction()
+{
+    if (mempool.empty())
+    {
+        std::cout << "No pending transactions to mine!\n";
+        return;
+    }
+
     int newIndex = chain.size();
 
     // get current time
@@ -33,15 +54,25 @@ void Blockchain::addBlock(const std::string &data)
 
     std::string timestr = ctime(&now);
 
-    Block newBlock(newIndex, timestr, data, getLatestBlock().hash);
-    
-    // proof of work happening here before adding a block to the blockchain
+    // create block with all mempool transactions
+    Block newBlock(newIndex, timestr, mempool, getLatestBlock().hash);
+
+    // Mine the block
     newBlock.mineBlock(difficulty);
 
+    // Add block to chain
     chain.push_back(newBlock);
 
+    // clear mempool after mining
+    mempool.clear();
+
+    // save updated chain to file
     saveToFile();
 }
+
+// -------------------------
+//      Validate the chain
+// -------------------------
 
 bool Blockchain::isValidChain()
 {
@@ -64,7 +95,9 @@ bool Blockchain::isValidChain()
     return true;
 }
 
-// save to blockchain.dat
+// -----------------------------
+//    Save chain to a .dat file
+// -----------------------------
 void Blockchain::saveToFile()
 {
     std::ofstream file("blockchain.dat");
@@ -73,35 +106,68 @@ void Blockchain::saveToFile()
     {
         file << block.index << "\n";
         file << block.timestamp;
-        file << block.data << "\n";
         file << block.previousHash << "\n";
-        file << block.hash << "\n---\n";
+        file << block.hash << "\n";
+
+        // save tx count
+        file << block.transactions.size() << "\n";
+
+        // save each transaction
+        for(auto &tx : block.transactions){
+            file << tx.sender << "\n";
+            file << tx.receiver << "\n";
+            file << tx.amount << "\n";
+        }
+
+        file << "---\n";
     }
 }
+
+// -----------------------------
+//     Load chain from .dat file
+// -----------------------------
 
 void Blockchain::loadFromFile()
 {
     chain.clear();
 
     std::ifstream file("blockchain.dat");
+
     if (!file.good())
         return;
 
-    int index;
-
-    std::string timestamp, data, prevHash, hash;
+     int index;
+    std::string timestamp, prevHash, hash;
     std::string separator;
 
     while (file >> index)
     {
         file.ignore();
         std::getline(file, timestamp);
-        std::getline(file, data);
         std::getline(file, prevHash);
         std::getline(file, hash);
-        std::getline(file, separator); // read the --- separator line
 
-        Block block(index, timestamp, data, prevHash);
+        int txCount;
+        file >> txCount;
+        file.ignore();
+
+        std::vector<Transaction> txs;
+        for (int i = 0; i < txCount; i++)
+        {
+            std::string sender, receiver;
+            double amount;
+
+            std::getline(file, sender);
+            std::getline(file, receiver);
+            file >> amount;
+            file.ignore();
+
+            txs.push_back(Transaction(sender, receiver, amount));
+        }
+
+        std::getline(file, separator);
+
+        Block block(index, timestamp, txs, prevHash);
         block.hash = hash;
 
         chain.push_back(block);

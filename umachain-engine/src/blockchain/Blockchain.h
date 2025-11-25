@@ -3,10 +3,12 @@
 
 #include <vector>
 #include "Block.h"
+#include "Transaction.h"
 
 class Blockchain{
     private: 
         std::vector<Block> chain;
+        std::vector<Transaction> mempool; // unconfirmed transactions
         int difficulty;
 
     public:
@@ -15,7 +17,9 @@ class Blockchain{
         Block createGenesisBlock();
         Block getLatestBlock();
 
-        void addBlock(const std::string &data);
+        void addTransaction(const Transaction &tx); // add transaction to mempool for mining
+        void minePendingTransaction(); // mine pending transactions and adds to the blockchain
+
         bool isValidChain();
 
         void saveToFile();

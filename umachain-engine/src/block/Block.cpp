@@ -1,16 +1,15 @@
 #include "Block.h"
 #include <iostream>
 #include <string>
-#include <chrono>
 #include <sstream>
 #include <functional> // for std::hash
 
 // Block class's constructor definition, we have declared the constructor of Block class in Block.h
-Block::Block(int idx, const std::string &time, const std::string &dataValue, const std::string &prevHashValue)
+Block::Block(int idx, const std::string &time, const std::vector<Transaction> &txs, const std::string &prevHashValue)
 {
     index = idx;
     timestamp = time;
-    data = dataValue;
+    transactions = txs;
     previousHash = prevHashValue;
     nonce = 0;
 
@@ -25,7 +24,13 @@ std::string Block::calculateHash()
 {
     std::stringstream ss;
 
-    ss << index << timestamp << data << previousHash << nonce;
+    // creating the raw input string with the block's data
+    ss << index << timestamp << previousHash << nonce;
+
+    // add all transactions into the hash input
+    for(auto &tx : transactions){
+        ss << tx.sender << tx.receiver << tx.amount; 
+    }
 
     std::hash<std::string> hasher;
     /*
