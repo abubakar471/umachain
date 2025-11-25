@@ -2,7 +2,7 @@
 #include "block/Block.h"
 
 int main() {
-    Block b1(1, "2025, 03-11", "First Block Data", "0");
+    Block b1(1, "2025, 03-11", {}, "0");
 
     std::cout << "Mining block..." << std::endl;
     b1.mineBlock(5); // difficulty 3
