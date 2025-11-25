@@ -1,7 +1,7 @@
 #include <iostream>
 #include <string>
-#include "httplib.h"
-#include "Blockchain.h"
+#include "../include/httplib.h"
+#include "./blockchain/Blockchain.h"
 
 Blockchain blockchain; // global blockchain instance or object
 

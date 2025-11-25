@@ -8,8 +8,8 @@
 #ifndef CPPHTTPLIB_HTTPLIB_H
 #define CPPHTTPLIB_HTTPLIB_H
 
-#define CPPHTTPLIB_VERSION "0.27.0"
-#define CPPHTTPLIB_VERSION_NUM "0x001B00"
+#define CPPHTTPLIB_VERSION "0.28.0"
+#define CPPHTTPLIB_VERSION_NUM "0x001C00"
 
 /*
  * Platform compatibility check
@@ -257,6 +257,7 @@ using socklen_t = int;
 #include <netinet/in.h>
 #ifdef __linux__
 #include <resolv.h>
+#undef _res // Undefine _res macro to avoid conflicts with user code (#2278)
 #endif
 #include <csignal>
 #include <netinet/tcp.h>
@@ -7931,7 +7932,11 @@ inline bool Server::read_content_core(
                      size_t /*len*/) { return receiver(buf, n); };
   }
 
-  if (req.method == "DELETE" && !req.has_header("Content-Length")) {
+  // RFC 7230 Section 3.3.3: If this is a request message and none of the above
+  // are true (no Transfer-Encoding and no Content-Length), then the message
+  // body length is zero (no message body is present).
+  if (!req.has_header("Content-Length") &&
+      !detail::is_chunked_transfer_encoding(req.headers)) {
     return true;
   }
 
