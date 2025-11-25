@@ -7,3 +7,8 @@ g++ -std=c++17 -I./src -I/usr/local/include test_crypto.cpp src/crypto/Crypto.cp
 
 ## compiling Block.cpp with test_block.cpp
 g++ -std=c++17 -I./src test_block.cpp src/block/Block.cpp -o test_block; ./test_block.exe
+
+# compiling the http server, blockchain, block, transaction together in the build directory
+first in terminal move to build directory there run this command
+
+g++ -std=c++17 ..\src\server.cpp ..\src\Blockchain.cpp ..\src\Block.cpp ..\src\Transaction.cpp -o api.exe -lws2_32 -D_WIN32_WINNT=0x0A00 
