@@ -6,15 +6,16 @@
 #include <functional> // for std::hash
 
 // Block class's constructor definition, we have declared the constructor of Block class in Block.h
-Block::Block(int idx, const std::string &dataValue, const std::string &prevHashValue)
+Block::Block(int idx, const std::string &time, const std::string &dataValue, const std::string &prevHashValue)
 {
     index = idx;
+    timestamp = time;
     data = dataValue;
     previousHash = prevHashValue;
     nonce = 0;
 
     // get timestamp in miliseconds
-    timestamp = std::chrono::system_clock::now().time_since_epoch().count();
+    // timestamp = std::chrono::system_clock::now().time_since_epoch().count();
 
     hash = calculateHash();
 }
