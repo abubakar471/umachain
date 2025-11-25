@@ -12,3 +12,5 @@ g++ -std=c++17 -I./src test_block.cpp src/block/Block.cpp -o test_block; ./test_
 first in terminal move to build directory there run this command
 
 g++ -std=c++17 ..\src\server.cpp ..\src\blockchain\Blockchain.cpp ..\src\block\Block.cpp ..\src\transaction\Transaction.cpp -o server.exe -lws2_32 -D_WIN32_WINNT=0x0A00 
+
+.\server.exe 2> server.log

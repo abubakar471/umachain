@@ -1,6 +1,7 @@
 #include "Blockchain.h"
 #include <fstream>
 #include <ctime>
+#include <limits>
 #include <sstream>
 #include <iostream>
 
@@ -8,6 +9,7 @@ Blockchain::Blockchain()
 {
     loadFromFile();
     difficulty = 5;
+    miningReward = 2.0;
 
     if (chain.empty())
     {
@@ -18,10 +20,10 @@ Blockchain::Blockchain()
 
 Block Blockchain::createGenesisBlock()
 {
-     Block newBlock(0, "2025-25-11", {}, "0");
-     newBlock.mineBlock(difficulty);
+    Block newBlock(0, "2025-25-11", {}, "0");
+    newBlock.mineBlock(difficulty);
 
-     return newBlock;
+    return newBlock;
 }
 
 Block Blockchain::getLatestBlock()
@@ -42,7 +44,7 @@ void Blockchain::addTransaction(const Transaction &tx)
 //      Mine block containing all transaction in mempool
 // -----------------------------------------------------
 
-bool Blockchain::minePendingTransactions(const std::string &miner)
+bool Blockchain::minePendingTransactions(const std::string &minerAddress)
 {
     if (mempool.empty())
     {
@@ -50,6 +52,12 @@ bool Blockchain::minePendingTransactions(const std::string &miner)
         return false;
     }
 
+    // 1. Add block reward (free coins from system)
+    Transaction rewardTx("SYSTEM", minerAddress, miningReward);
+    rewardTx.status = TxStatus::CONFIRMED;
+    mempool.push_back(rewardTx);
+
+    // 2. create block with all mempool transactions
     int newIndex = chain.size();
 
     // get current time
@@ -57,16 +65,22 @@ bool Blockchain::minePendingTransactions(const std::string &miner)
 
     std::string timestr = ctime(&now);
 
-    // create block with all mempool transactions
+    /* 
+        setting the pending transactions status to confirmed thhose are about to be added to a new block that are going to be added to the blockchain 
+    */
+    for (auto &tx : mempool) {
+        tx.status = TxStatus::CONFIRMED;
+    }
+
     Block newBlock(newIndex, timestr, mempool, getLatestBlock().hash);
 
-    // Mine the block
+    // 3. Perform PoW, Mine the block
     newBlock.mineBlock(difficulty);
 
-    // Add block to chain
+    // 4. Add block to chain
     chain.push_back(newBlock);
 
-    // clear mempool after mining
+    // 5. Clear mempool
     mempool.clear();
 
     // save updated chain to file
@@ -75,17 +89,22 @@ bool Blockchain::minePendingTransactions(const std::string &miner)
     return true; // block mined successfully
 }
 
-double Blockchain::getBalance(const std::string &walletAddress) {
+double Blockchain::getBalance(const std::string &walletAddress)
+{
     double balance = 0.0;
 
     // Go through every block
-    for (const auto &block : chain) {
+    for (const auto &block : chain)
+    {
         // Go through each transaction
-        for (const auto &tx : block.transactions) {
-            if (tx.sender == walletAddress) {
+        for (const auto &tx : block.transactions)
+        {
+            if (tx.sender == walletAddress)
+            {
                 balance -= tx.amount;
             }
-            if (tx.receiver == walletAddress) {
+            if (tx.receiver == walletAddress)
+            {
                 balance += tx.amount;
             }
         }
@@ -93,7 +112,6 @@ double Blockchain::getBalance(const std::string &walletAddress) {
 
     return balance;
 }
-
 
 // -------------------------
 //      Validate the chain
@@ -130,67 +148,103 @@ void Blockchain::saveToFile()
     for (auto &block : chain)
     {
         file << block.index << "\n";
-        file << block.timestamp;
+        // ctime() timestamps include a trailing '\n'. Remove it so each field stays on one line.
+        std::string ts = block.timestamp;
+        if (!ts.empty() && ts.back() == '\n')
+            ts.pop_back();
+        file << ts << "\n";
         file << block.previousHash << "\n";
         file << block.hash << "\n";
 
-        // save tx count
         file << block.transactions.size() << "\n";
 
-        // save each transaction
-        for(auto &tx : block.transactions){
+        for (auto &tx : block.transactions)
+        {
             file << tx.sender << "\n";
             file << tx.receiver << "\n";
             file << tx.amount << "\n";
+            file << (int)tx.status << "\n";
         }
 
         file << "---\n";
     }
 }
 
+
 // -----------------------------
 //     Load chain from .dat file
 // -----------------------------
-
 void Blockchain::loadFromFile()
 {
     chain.clear();
 
     std::ifstream file("blockchain.dat");
-
     if (!file.good())
         return;
 
-     int index;
+    int index;
     std::string timestamp, prevHash, hash;
     std::string separator;
 
     while (file >> index)
     {
-        file.ignore();
+        file.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+
         std::getline(file, timestamp);
         std::getline(file, prevHash);
         std::getline(file, hash);
+        int txCount = 0;
+        if (!(file >> txCount)) {
+            std::cerr << "[Blockchain] Failed to read txCount for block index " << index << ". Aborting load.\n";
+            break;
+        }
 
-        int txCount;
-        file >> txCount;
-        file.ignore();
+        // Basic sanity check to avoid absurd allocations from malformed files
+        if (txCount < 0 || txCount > 1000000) {
+            std::cerr << "[Blockchain] Suspicious txCount=" << txCount << " for block index " << index << ". Aborting load.\n";
+            break;
+        }
+
+        file.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 
         std::vector<Transaction> txs;
+        txs.reserve((size_t)std::min(txCount, 1000));
+
+        bool parseError = false;
         for (int i = 0; i < txCount; i++)
         {
             std::string sender, receiver;
-            double amount;
+            double amount = 0.0;
+            int statusInt = 0;
 
             std::getline(file, sender);
             std::getline(file, receiver);
-            file >> amount;
-            file.ignore();
 
-            txs.push_back(Transaction(sender, receiver, amount));
+            if (!(file >> amount)) {
+                std::cerr << "[Blockchain] Failed to read amount for tx " << i << " in block " << index << ".\n";
+                parseError = true;
+                break;
+            }
+            if (!(file >> statusInt)) {
+                std::cerr << "[Blockchain] Failed to read status for tx " << i << " in block " << index << ".\n";
+                parseError = true;
+                break;
+            }
+
+            file.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+
+            Transaction tx(sender, receiver, amount);
+            tx.status = (TxStatus)statusInt;
+
+            txs.push_back(tx);
         }
 
-        std::getline(file, separator);
+        if (parseError) {
+            std::cerr << "[Blockchain] Parse error while loading block " << index << ". Aborting load.\n";
+            break;
+        }
+
+        std::getline(file, separator); // read "---"
 
         Block block(index, timestamp, txs, prevHash);
         block.hash = hash;

@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include "../transaction/Transaction.h"
+#include "../../include/json.hpp"
 
 class Block
 {
@@ -20,6 +21,20 @@ class Block
 
         std::string calculateHash();
         void mineBlock(int difficulty);
+
+        nlohmann::json toJSON() const {
+            nlohmann::json txList = nlohmann::json::array();
+            for (const auto &tx : transactions)
+             txList.push_back(tx.toJSON());
+
+            return {
+                {"index", index},
+                {"timestamp", timestamp},
+                {"previousHash", previousHash},
+                {"hash", hash},
+                {"transactions", txList}
+            };
+        }
 };
 
 #endif

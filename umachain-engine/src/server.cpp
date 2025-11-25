@@ -19,15 +19,14 @@ int main()
             output += "Timestamp: " + block.timestamp + "\n";
             output += "Transactions:\n";
             for (const auto &tx : block.transactions) {
-                output += "  " + tx.sender + " -> " + tx.receiver + " : " + std::to_string(tx.amount) + "\n";
+                output += "  " + tx.sender + " -> " + tx.receiver + " : " + std::to_string(tx.amount) + " -> " + "Status : CONFIRMED" + "\n";
             }
 
             output += "PrevHash: " + block.previousHash + "\n";
             output += "Hash: " + block.hash + "\n";
             output += "-------------------------\n";
         }
-        res.set_content(output, "text/plain"); 
-    });
+        res.set_content(output, "text/plain"); });
 
     // POST /add-transaction → add tx to mempool
     server.Post("/add-transaction", [](const httplib::Request &req, httplib::Response &res)
@@ -44,9 +43,10 @@ int main()
         res.set_content("Transaction added successfully", "text/plain"); });
 
     // GET /mine → mine new block
-    server.Get("/mine", [](const httplib::Request &, httplib::Response &res)
+    server.Get("/mine", [](const httplib::Request &req, httplib::Response &res)
                {
-        bool mined = blockchain.minePendingTransactions("miner-wallet");
+        auto miner_address = req.get_param_value("miner_address");
+        bool mined = blockchain.minePendingTransactions(miner_address);
 
         if (mined)
             res.set_content("Block mined successfully", "text/plain");
@@ -60,6 +60,14 @@ int main()
         double balance = blockchain.getBalance(wallet);
 
         res.set_content("Balance: " + std::to_string(balance), "text/plain"); });
+
+    server.Get("/mempool", [](auto &, auto &res)
+               {
+        std::string out = "";
+        for (auto &tx : blockchain.getMempool()) {
+            out += tx.sender + " -> " + tx.receiver + " : " + std::to_string(tx.amount) + " [PENDING]\n";
+        }
+        res.set_content(out, "text/plain"); });
 
     std::cout << "Server running on http://localhost:8080\n";
     server.listen("0.0.0.0", 8080);
