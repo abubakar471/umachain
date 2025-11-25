@@ -1,6 +1,7 @@
 #include <iostream>
 #include <string>
 #include "../include/httplib.h"
+#include "../include/json.hpp"
 #include "./blockchain/Blockchain.h"
 
 Blockchain blockchain; // global blockchain instance or object
@@ -13,20 +14,12 @@ int main()
     // GET /chain -> returns full chain
     server.Get("/chain", [](const httplib::Request &, httplib::Response &res)
                {
-        std::string output = "";
-        for (auto &block : blockchain.getChain()) {
-            output += "Index: " + std::to_string(block.index) + "\n";
-            output += "Timestamp: " + block.timestamp + "\n";
-            output += "Transactions:\n";
-            for (const auto &tx : block.transactions) {
-                output += "  " + tx.sender + " -> " + tx.receiver + " : " + std::to_string(tx.amount) + " -> " + "Status : CONFIRMED" + "\n";
-            }
+        nlohmann::json jChain = nlohmann::json::array();
 
-            output += "PrevHash: " + block.previousHash + "\n";
-            output += "Hash: " + block.hash + "\n";
-            output += "-------------------------\n";
-        }
-        res.set_content(output, "text/plain"); });
+        for (auto &block : blockchain.getChain())
+        jChain.push_back(block.toJSON());
+
+        res.set_content(jChain.dump(4), "application/json"); });
 
     // POST /add-transaction → add tx to mempool
     server.Post("/add-transaction", [](const httplib::Request &req, httplib::Response &res)
@@ -40,34 +33,62 @@ int main()
         Transaction tx(sender, receiver, amount);
         blockchain.addTransaction(tx);
 
-        res.set_content("Transaction added successfully", "text/plain"); });
+        // return a simple JSON object confirming the operation
+        nlohmann::json response = {
+            {"success", true},
+            {"message", "Transaction added successfully"},
+        };
+
+        res.set_content(response.dump(), "application/json"); });
 
     // GET /mine → mine new block
     server.Get("/mine", [](const httplib::Request &req, httplib::Response &res)
                {
-        auto miner_address = req.get_param_value("miner_address");
-        bool mined = blockchain.minePendingTransactions(miner_address);
+                   auto miner_address = req.get_param_value("miner_address");
+                   bool mined = blockchain.minePendingTransactions(miner_address);
 
-        if (mined)
-            res.set_content("Block mined successfully", "text/plain");
-        else
-            res.set_content("No transactions to mine", "text/plain"); });
+                   nlohmann::json response;
 
+                   if (mined){
+                       response = {
+                           {"success", true},
+                           {"message", "Block mined successfully."},
+                       };
+
+                    res.set_content(response.dump(), "application/json");
+                   }
+                    
+                   else
+                   {
+                       response = {
+                           {"success", false},
+                           {"message", "No transaction found to mine."},
+                       };
+
+                       res.set_content(response.dump(), "application/json");
+                   } });
     // GET /balance/:wallet
     server.Get(R"(/balance/(.*))", [](const httplib::Request &req, httplib::Response &res)
                {
         std::string wallet = req.matches[1];
         double balance = blockchain.getBalance(wallet);
+        
+        nlohmann::json response = {
+            {"success", true},
+            {"wallet_address", wallet},
+            {"balance", balance},
+        };
 
-        res.set_content("Balance: " + std::to_string(balance), "text/plain"); });
+        res.set_content(response.dump(), "application/json"); });
 
     server.Get("/mempool", [](auto &, auto &res)
                {
-        std::string out = "";
-        for (auto &tx : blockchain.getMempool()) {
-            out += tx.sender + " -> " + tx.receiver + " : " + std::to_string(tx.amount) + " [PENDING]\n";
-        }
-        res.set_content(out, "text/plain"); });
+        nlohmann::json jChain = nlohmann::json::array();
+
+        for (auto &tx : blockchain.getMempool())
+        jChain.push_back(tx.toJSON());
+
+        res.set_content(jChain.dump(4), "application/json"); });
 
     std::cout << "Server running on http://localhost:8080\n";
     server.listen("0.0.0.0", 8080);

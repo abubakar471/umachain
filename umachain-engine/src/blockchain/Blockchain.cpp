@@ -4,6 +4,7 @@
 #include <limits>
 #include <sstream>
 #include <iostream>
+#include "../../include/json.hpp"
 
 Blockchain::Blockchain()
 {
@@ -64,6 +65,13 @@ bool Blockchain::minePendingTransactions(const std::string &minerAddress)
     time_t now = time(0);
 
     std::string timestr = ctime(&now);
+
+    // ctime() returns a string that usually ends with '\n' (and on Windows may include '\r').
+    // Remove trailing CR/LF so timestamps don't introduce blank lines in saved files.
+    while (!timestr.empty() && (timestr.back() == '\n' || timestr.back() == '\r')) {
+        timestr.pop_back();
+    }
+
 
     /* 
         setting the pending transactions status to confirmed thhose are about to be added to a new block that are going to be added to the blockchain 
@@ -141,110 +149,54 @@ bool Blockchain::isValidChain()
 // -----------------------------
 //    Save chain to a .dat file
 // -----------------------------
-void Blockchain::saveToFile()
-{
-    std::ofstream file("blockchain.dat");
-
-    for (auto &block : chain)
-    {
-        file << block.index << "\n";
-        // ctime() timestamps include a trailing '\n'. Remove it so each field stays on one line.
-        std::string ts = block.timestamp;
-        if (!ts.empty() && ts.back() == '\n')
-            ts.pop_back();
-        file << ts << "\n";
-        file << block.previousHash << "\n";
-        file << block.hash << "\n";
-
-        file << block.transactions.size() << "\n";
-
-        for (auto &tx : block.transactions)
-        {
-            file << tx.sender << "\n";
-            file << tx.receiver << "\n";
-            file << tx.amount << "\n";
-            file << (int)tx.status << "\n";
-        }
-
-        file << "---\n";
-    }
+void Blockchain::saveToFile() {
+    saveToJSON();
 }
 
+void Blockchain::saveToJSON() {
+    nlohmann::json jChain = nlohmann::json::array();
+
+    for (const auto &block : chain)
+        jChain.push_back(block.toJSON());
+
+    std::ofstream file("../data/blockchain.json");
+    file << jChain.dump(4);   // pretty print JSON
+}
 
 // -----------------------------
 //     Load chain from .dat file
 // -----------------------------
-void Blockchain::loadFromFile()
-{
-    chain.clear();
+void Blockchain::loadFromFile() {
+    loadFromJSON();
+}
 
-    std::ifstream file("blockchain.dat");
+void Blockchain::loadFromJSON() {
+    std::ifstream file("../data/blockchain.json");
     if (!file.good())
         return;
 
-    int index;
-    std::string timestamp, prevHash, hash;
-    std::string separator;
+    nlohmann::json jChain;
+    file >> jChain;
 
-    while (file >> index)
+    chain.clear();
+    for (auto &jBlock : jChain)
     {
-        file.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-
-        std::getline(file, timestamp);
-        std::getline(file, prevHash);
-        std::getline(file, hash);
-        int txCount = 0;
-        if (!(file >> txCount)) {
-            std::cerr << "[Blockchain] Failed to read txCount for block index " << index << ". Aborting load.\n";
-            break;
-        }
-
-        // Basic sanity check to avoid absurd allocations from malformed files
-        if (txCount < 0 || txCount > 1000000) {
-            std::cerr << "[Blockchain] Suspicious txCount=" << txCount << " for block index " << index << ". Aborting load.\n";
-            break;
-        }
-
-        file.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+        int index = jBlock["index"];
+        std::string timestamp = jBlock["timestamp"];
+        std::string prevHash = jBlock["previousHash"];
+        std::string hash = jBlock["hash"];
 
         std::vector<Transaction> txs;
-        txs.reserve((size_t)std::min(txCount, 1000));
-
-        bool parseError = false;
-        for (int i = 0; i < txCount; i++)
+        for (auto &jTx : jBlock["transactions"])
         {
-            std::string sender, receiver;
-            double amount = 0.0;
-            int statusInt = 0;
-
-            std::getline(file, sender);
-            std::getline(file, receiver);
-
-            if (!(file >> amount)) {
-                std::cerr << "[Blockchain] Failed to read amount for tx " << i << " in block " << index << ".\n";
-                parseError = true;
-                break;
-            }
-            if (!(file >> statusInt)) {
-                std::cerr << "[Blockchain] Failed to read status for tx " << i << " in block " << index << ".\n";
-                parseError = true;
-                break;
-            }
-
-            file.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-
-            Transaction tx(sender, receiver, amount);
-            tx.status = (TxStatus)statusInt;
-
+            Transaction tx(
+                jTx["sender"],
+                jTx["receiver"],
+                jTx["amount"]
+            );
+            tx.status = (TxStatus)jTx["status"];
             txs.push_back(tx);
         }
-
-        if (parseError) {
-            std::cerr << "[Blockchain] Parse error while loading block " << index << ". Aborting load.\n";
-            break;
-        }
-
-        std::getline(file, separator); // read "---"
 
         Block block(index, timestamp, txs, prevHash);
         block.hash = hash;

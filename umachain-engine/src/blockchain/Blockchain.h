@@ -27,18 +27,14 @@ public:
     bool isValidChain();
     std::vector<Block> getChain()
     {
-        std::cout << "-----carrying chain blocks-----" << std::endl;
-        std::cout << "chain size : " << (int)chain.size() << std::endl;
-        for (int i = 0; i < (int)chain.size(); i++)
-        {
-            std::cout << "hash : " << chain[i].hash << std::endl;
-        }
         return chain;
     };
     std::vector<Transaction> getMempool() { return mempool; };
 
     void saveToFile();
     void loadFromFile();
+    void saveToJSON();
+    void loadFromJSON();
 };
 
 #endif
