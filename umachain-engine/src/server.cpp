@@ -3,6 +3,9 @@
 #include "../include/httplib.h"
 #include "../include/json.hpp"
 #include "./blockchain/Blockchain.h"
+#include "./wallet/WalletManager.h"
+
+WalletManager walletManager;
 
 Blockchain blockchain; // global blockchain instance or object
 
@@ -89,6 +92,32 @@ int main()
         jChain.push_back(tx.toJSON());
 
         res.set_content(jChain.dump(4), "application/json"); });
+
+    server.Post("/wallet/init", [&](const httplib::Request &req, httplib::Response &res)
+                {
+        auto userId = req.get_param_value("userId");
+    
+        std::string wallet = walletManager.getOrCreateWallet(userId);
+        double balance = walletManager.getBalance(wallet);
+
+        std::string json = "{ \"wallet\": \"" + wallet +
+                       "\", \"balance\": " + std::to_string(balance) + " }";
+
+        res.set_content(json, "application/json"); });
+
+    server.Get(R"(/wallet/balance/(.*))", [&](const httplib::Request &req, httplib::Response &res)
+               {
+        auto wallet = req.matches[1];
+        double balance = walletManager.getBalance(wallet);
+
+        nlohmann::json response;
+
+        response = {
+            {"success", true},
+            {"balance", balance}
+        };
+
+        res.set_content(response.dump(), "application/json"); });
 
     std::cout << "Server running on http://localhost:8080\n";
     server.listen("0.0.0.0", 8080);
