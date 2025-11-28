@@ -13,19 +13,35 @@ int main()
 {
 
     httplib::Server server;
+    std::string CLIENT_URL = "http://localhost:3000";
+
+    // CORS helper: use CLIENT_URL for more restrictive policy in development
+    auto set_cors = [&](httplib::Response &res) {
+        res.set_header("Access-Control-Allow-Origin", CLIENT_URL.c_str());
+        res.set_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+        res.set_header("Access-Control-Allow-Headers", "Content-Type, Authorization");
+    };
+
+    // Preflight handler for any path
+    server.Options(R"(/.*)", [&](const httplib::Request & /*req*/, httplib::Response &res) {
+        set_cors(res);
+        res.status = 200;
+        res.set_content("", "text/plain");
+    });
 
     // GET /chain -> returns full chain
-    server.Get("/chain", [](const httplib::Request &, httplib::Response &res)
+    server.Get("/chain", [&](const httplib::Request &, httplib::Response &res)
                {
         nlohmann::json jChain = nlohmann::json::array();
 
         for (auto &block : blockchain.getChain())
-        jChain.push_back(block.toJSON());
+            jChain.push_back(block.toJSON());
 
+        set_cors(res);
         res.set_content(jChain.dump(4), "application/json"); });
 
     // POST /add-transaction → add tx to mempool
-    server.Post("/add-transaction", [](const httplib::Request &req, httplib::Response &res)
+    server.Post("/add-transaction", [&](const httplib::Request &req, httplib::Response &res)
                 {
         auto sender = req.get_param_value("sender");
         auto receiver = req.get_param_value("receiver");
@@ -42,22 +58,24 @@ int main()
             {"message", "Transaction added successfully"},
         };
 
+        set_cors(res);
         res.set_content(response.dump(), "application/json"); });
 
     // GET /mine → mine new block
-    server.Get("/mine", [](const httplib::Request &req, httplib::Response &res)
+    server.Get("/mine", [&](const httplib::Request &req, httplib::Response &res)
                {
                    auto miner_address = req.get_param_value("miner_address");
                    bool mined = blockchain.minePendingTransactions(miner_address);
 
                    nlohmann::json response;
 
-                   if (mined){
+                    if (mined){
                        response = {
                            {"success", true},
                            {"message", "Block mined successfully."},
                        };
 
+                    set_cors(res);
                     res.set_content(response.dump(), "application/json");
                    }
                     
@@ -68,10 +86,12 @@ int main()
                            {"message", "No transaction found to mine."},
                        };
 
-                       res.set_content(response.dump(), "application/json");
+
+                              set_cors(res);
+                              res.set_content(response.dump(), "application/json");
                    } });
     // GET /balance/:wallet
-    server.Get(R"(/balance/(.*))", [](const httplib::Request &req, httplib::Response &res)
+    server.Get(R"(/balance/(.*))", [&](const httplib::Request &req, httplib::Response &res)
                {
         std::string wallet = req.matches[1];
         double balance = blockchain.getBalance(wallet);
@@ -82,15 +102,17 @@ int main()
             {"balance", balance},
         };
 
+        set_cors(res);
         res.set_content(response.dump(), "application/json"); });
 
-    server.Get("/mempool", [](auto &, auto &res)
+    server.Get("/mempool", [&](auto &, auto &res)
                {
         nlohmann::json jChain = nlohmann::json::array();
 
         for (auto &tx : blockchain.getMempool())
         jChain.push_back(tx.toJSON());
 
+        set_cors(res);
         res.set_content(jChain.dump(4), "application/json"); });
 
     server.Post("/wallet/init", [&](const httplib::Request &req, httplib::Response &res)
@@ -100,10 +122,18 @@ int main()
         std::string wallet = walletManager.getOrCreateWallet(userId);
         double balance = walletManager.getBalance(wallet);
 
-        std::string json = "{ \"wallet\": \"" + wallet +
-                       "\", \"balance\": " + std::to_string(balance) + " }";
+        // std::string json = "{ \"wallet\": \"" + wallet +
+        //                "\", \"balance\": " + std::to_string(balance) + " }";
+       nlohmann::json response;
 
-        res.set_content(json, "application/json"); });
+       response = {
+        {"success", true},
+        {"wallet", wallet},
+        {"balance", balance}
+       };
+
+    set_cors(res);
+    res.set_content(response.dump(), "application/json"); });
 
     server.Get(R"(/wallet/balance/(.*))", [&](const httplib::Request &req, httplib::Response &res)
                {
@@ -117,6 +147,7 @@ int main()
             {"balance", balance}
         };
 
+        set_cors(res);
         res.set_content(response.dump(), "application/json"); });
 
     std::cout << "Server running on http://localhost:8080\n";

@@ -1,8 +1,10 @@
 {
     "balances": {
+        "WALLET_110565": 0.0,
         "WALLET_355662": 0.0
     },
     "users": {
+        "": "WALLET_110565",
         "user_id24xt46": "WALLET_355662"
     }
 }

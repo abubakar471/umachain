@@ -7,7 +7,7 @@ const AuthLayout = async ({ children }) => {
 
     // if(userId) redirect("/account")
     return (
-        <div>
+        <div className='px-10!'>
             <Navbar />
             <div className='w-full min-h-[80vh] flex flex-col items-center justify-center'>
                 {children}
