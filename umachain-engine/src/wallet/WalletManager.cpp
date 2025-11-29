@@ -59,6 +59,14 @@ void WalletManager::updateBalance(const std::string &walletId, double amount){
     saveToFile();
 }
 
+// check if wallet exists or not
+bool WalletManager::walletExists(const std::string &walletId) {
+    if (walletId.rfind("WALLET_", 0) != 0)
+        return false; 
+
+    return walletBalances.count(walletId) > 0;
+}
+
 // save to wallets.json
 void WalletManager::saveToFile(){
     json j;

@@ -16,7 +16,7 @@ class WalletManager{
 
     public:
         WalletManager();
-        
+        bool walletExists(const std::string &walletId);
         std::string getOrCreateWallet(const std::string &userId);
         std::string getWallet(const std::string &userId);
         double getBalance(const std::string &walletId);

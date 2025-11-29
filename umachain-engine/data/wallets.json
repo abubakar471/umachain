@@ -1,9 +1,9 @@
 {
     "balances": {
-        "SYSTEM": -2.0,
-        "WALLET_110565": 1.0,
-        "WALLET_295397": 4.0,
-        "ab": 2.0
+        "SYSTEM": -6.0,
+        "WALLET_110565": 3.0,
+        "WALLET_295397": 2.0,
+        "ab": 6.0
     },
     "users": {
         "user_35uZaxOuLgZIqJVhDHhrdhqjfCs": "WALLET_295397"

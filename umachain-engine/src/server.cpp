@@ -61,10 +61,11 @@ int main()
             return res.set_content(response.dump(), "application/json"); 
         }
 
-        if(walletManager.getWallet(sender_user_id) == ""){
+
+         if(!walletManager.walletExists(sender) || !walletManager.walletExists(receiver)){
                    nlohmann::json response = {
             {"success", false},
-            {"message", "Invalid wallet id of sender"},
+            {"message", "Invalid Wallet Id"},
             };
 
             set_cors(res);
