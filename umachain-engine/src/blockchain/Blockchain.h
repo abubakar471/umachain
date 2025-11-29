@@ -5,6 +5,7 @@
 #include <iostream>
 #include "../block/Block.h"
 #include "../transaction/Transaction.h"
+#include "../wallet/WalletManager.h"
 
 class Blockchain
 {
@@ -21,7 +22,7 @@ public:
     Block getLatestBlock();
 
     void addTransaction(const Transaction &tx);                    // add transaction to mempool for mining
-    bool minePendingTransactions(const std::string &minerAddress); // mine pending transactions and adds to the blockchain
+    bool minePendingTransactions(const std::string &minerAddress, WalletManager &walletManager); // mine pending transactions and adds to the blockchain
     double getBalance(const std::string &walletAddress);
 
     bool isValidChain();

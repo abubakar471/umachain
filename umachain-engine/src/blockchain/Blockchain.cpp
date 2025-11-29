@@ -38,6 +38,7 @@ Block Blockchain::getLatestBlock()
 
 void Blockchain::addTransaction(const Transaction &tx)
 {
+    
     mempool.push_back(tx);
 }
 
@@ -45,7 +46,7 @@ void Blockchain::addTransaction(const Transaction &tx)
 //      Mine block containing all transaction in mempool
 // -----------------------------------------------------
 
-bool Blockchain::minePendingTransactions(const std::string &minerAddress)
+bool Blockchain::minePendingTransactions(const std::string &minerAddress, WalletManager &walletManager)
 {
     if (mempool.empty())
     {
@@ -77,6 +78,12 @@ bool Blockchain::minePendingTransactions(const std::string &minerAddress)
         setting the pending transactions status to confirmed thhose are about to be added to a new block that are going to be added to the blockchain 
     */
     for (auto &tx : mempool) {
+         // deduct from sender
+        walletManager.updateBalance(tx.sender, -tx.amount);
+
+        // credit receiver
+        walletManager.updateBalance(tx.receiver, tx.amount);
+
         tx.status = TxStatus::CONFIRMED;
     }
 
