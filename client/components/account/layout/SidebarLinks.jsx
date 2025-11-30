@@ -1,7 +1,7 @@
 "use client"
 
 import { SidebarGroup } from '@/components/ui/sidebar'
-import { BadgeDollarSign, Home, Receipt, Wallet } from 'lucide-react'
+import { ArrowLeftRight, BadgeDollarSign, Home, Receipt, Wallet } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import React from 'react'
@@ -24,6 +24,11 @@ const SidebarLinks = () => {
             name : "Sell", 
             href : "/account/sell",
             icon : <BadgeDollarSign />
+        },
+        {
+            name : "Transfer", 
+            href : "/account/transfer",
+            icon : <ArrowLeftRight />
         },
         {
             name : "Transactions", 

@@ -8,6 +8,8 @@ import {
   SignedOut,
   UserButton,
 } from '@clerk/nextjs'
+import { Toaster } from "react-hot-toast";
+import NextTopLoader from "nextjs-toploader";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -37,6 +39,34 @@ export default function RootLayout({ children }) {
           className={`${poppins.className} antialiased`}
         >
           {children}
+          <NextTopLoader color="#FDE300" />
+          <Toaster
+            position="top-center"
+            reverseOrder={false}
+            gutter={8}
+            containerClassName=""
+            containerStyle={{}}
+            toasterId="default"
+            toastOptions={{
+              // Define default options
+              className: '',
+              duration: 5000,
+              removeDelay: 1000,
+              style: {
+                background: '#363636',
+                color: '#fff',
+              },
+
+              // Default options for specific types
+              success: {
+                duration: 3000,
+                iconTheme: {
+                  primary: 'green',
+                  secondary: 'black',
+                },
+              },
+            }}
+          />
         </body>
       </html>
     </ClerkProvider>

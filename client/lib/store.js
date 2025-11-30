@@ -8,6 +8,7 @@ import axios from "axios";
 
 export const useWalletStore = create()(persist(
     (set => ({
+        basePrice : 10,
         walletAddress: "",
         balance: 0.00,
         setWalletInfo : (payload) => set({
