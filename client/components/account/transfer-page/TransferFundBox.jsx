@@ -91,9 +91,9 @@ const TransferFundBox = () => {
                     </p> */}
                     <div className="flex items-center gap-x-2">
                         <div className='w-9 h-9 flex items-center justify-center p-2 rounded-md bg-linear-to-br text-white from-white/20 via-[#555] to-white/20 '>
-                             <Globe className='text-cyan-500' />
+                            <Globe className='text-cyan-500' />
                         </div>
-                     
+
                         <Input type="text" placeholder="Reciever wallet address" className="outline-none ring-0! focus:ring-0! border-0 border-b-2 border-neutral-500 p-5 indent-2 rounded-b-none text-neutral-400"
                             value={receiver}
                             onChange={e => setReceiver(e.target.value)}
@@ -109,7 +109,7 @@ const TransferFundBox = () => {
                                 <Input type="number" name="umacoin-amount" placeholder="0.00" className="outline-none ring-0! focus:ring-0! border-0 border-b-2 p-5 indent-2 rounded-b-none border-neutral-500 text-neutral-400"
                                     value={amount}
                                     onChange={e => {
-                                        if ((e.target.value <= balance) && (e.target.value > 0)) {
+                                        if ((e.target.value <= balance) && (e.target.value >= 0)) {
                                             handleAmountChange(e);
                                         } else {
                                             setErrMessage("Insufficient Funds");
@@ -131,7 +131,7 @@ const TransferFundBox = () => {
                                     value={amountOnDollars}
                                     onChange={e => {
                                         if (amount <= balance) {
-                                            if ((e.target.value <= (balance * 10)) && e.target.value > 0) {
+                                            if ((e.target.value <= (balance * 10)) && e.target.value >= 0) {
                                                 handleAmountChange(e, "DOLLAR");
                                             } else {
                                                 setErrMessage("Insufficient Funds");
@@ -145,7 +145,7 @@ const TransferFundBox = () => {
 
                     </div>
 
-                    <Button disabled={isSending} className={"bg-[#FDE300] hover:bg-[#FDE300]/80 cursor-pointer text-black text-xl mt-4 w-full py-6"}>
+                    <Button disabled={isSending || (amount === 0) || (amountOnDollars === 0)} className={"bg-[#FDE300] hover:bg-[#FDE300]/80 cursor-pointer text-black text-xl mt-4 w-full py-6"}>
                         Send
                         {
                             !isSending ? <Send /> : <Spinner />
