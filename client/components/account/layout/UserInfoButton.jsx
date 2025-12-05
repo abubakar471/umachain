@@ -33,6 +33,7 @@ const UserInfoButton = () => {
             if (isLoaded) {
                 window.localStorage.removeItem("walletAddress");
                 window.localStorage.removeItem("walletBalance");
+                window.localStorage.removeItem("wallet-storage");
 
                 signOut({ redirectUrl: '/' });
             }

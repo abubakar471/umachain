@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Spinner } from '@/components/ui/spinner'
+import { signMessage } from '@/lib/signature'
 import { useWalletStore } from '@/lib/store'
 import { useUser } from '@clerk/nextjs'
 import axios from 'axios'
@@ -15,12 +16,12 @@ import toast from 'react-hot-toast'
 const TransferFundBox = () => {
     const [sender, setSender] = useState("");
     const [receiver, setReceiver] = useState("");
-    const [amount, setAmount] = useState(0.00);
-    const [amountOnDollars, setAmountOnDollars] = useState(0.00);
+    const [amount, setAmount] = useState(0);
+    const [amountOnDollars, setAmountOnDollars] = useState(0.0);
     const [errMessage, setErrMessage] = useState("");
     const [isSending, setIsSending] = useState(false);
 
-    const { walletAddress, basePrice, balance } = useWalletStore(state => state);
+    const { walletAddress, basePrice, balance, publicKey, privateKey } = useWalletStore(state => state);
     const { user, isSignedIn, isLoaded } = useUser();
 
     const handleAmountChange = (e, flag = "") => {
@@ -46,7 +47,7 @@ const TransferFundBox = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-
+        setErrMessage("");
         try {
             setIsSending(true);
 
@@ -54,7 +55,26 @@ const TransferFundBox = () => {
                 setErrMessage("wallet not synced");
             }
 
-            const res = await axios.post(`${process.env.NEXT_PUBLIC_API}/add-transaction?sender=${walletAddress}&receiver=${receiver}&amount=${amount}`);
+            const ts = Date.now();
+            const amountString = amount.toString();
+            console.log("amount string : ", amountString);
+            
+            const message = `${walletAddress}|${receiver}|${amountString}`;
+            console.log("message : ", message)
+            
+            const signatureBase64 = await signMessage(privateKey, message);
+
+            const form = new FormData();
+            form.append('sender', walletAddress);
+            form.append('receiver', receiver);
+            form.append('amount', amountString);
+            form.append('signature', signatureBase64);
+            // append raw public key so spaces and newlines are preserved
+            form.append('pubKeyPem', publicKey);
+            form.append('timestamp', String(ts));
+            form.append('tx_message', message);
+
+            const res = await axios.post(`${process.env.NEXT_PUBLIC_API}/add-transaction`, form);
 
             const data = res?.data;
 
@@ -64,7 +84,7 @@ const TransferFundBox = () => {
                 setReceiver("");
                 setAmount(0.0);
                 setAmountOnDollars(0.0);
-
+                
                 toast.success("Transaction is in progress")
             }
 
@@ -79,7 +99,7 @@ const TransferFundBox = () => {
 
     useEffect(() => {
         if (errMessage) {
-            toast.error("Insufficient Fund");
+            toast.error(errMessage);
         }
     }, [errMessage])
     return (
@@ -145,12 +165,19 @@ const TransferFundBox = () => {
 
                     </div>
 
-                    <Button disabled={isSending || (amount === 0) || (amountOnDollars === 0)} className={"bg-[#FDE300] hover:bg-[#FDE300]/80 cursor-pointer text-black text-xl mt-4 w-full py-6"}>
+                    <Button disabled={isSending} className={"bg-[#FDE300] hover:bg-[#FDE300]/80 cursor-pointer text-black text-xl mt-4 w-full py-6"}>
                         Send
                         {
                             !isSending ? <Send /> : <Spinner />
                         }
                     </Button>
+
+                    {/* <Button disabled={isSending || (amount === 0) || (amountOnDollars === 0)} className={"bg-[#FDE300] hover:bg-[#FDE300]/80 cursor-pointer text-black text-xl mt-4 w-full py-6"}>
+                        Send
+                        {
+                            !isSending ? <Send /> : <Spinner />
+                        }
+                    </Button> */}
                 </form>
             </div>
         )

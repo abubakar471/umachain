@@ -4,6 +4,9 @@
 #include "../include/json.hpp"
 #include "./blockchain/Blockchain.h"
 #include "./wallet/WalletManager.h"
+#include "./crypto/Crypto.h"
+#include <openssl/bio.h>
+#include <openssl/evp.h>
 
 WalletManager walletManager;
 
@@ -44,10 +47,32 @@ int main()
     // POST /add-transaction → add tx to mempool
     server.Post("/add-transaction", [&](const httplib::Request &req, httplib::Response &res)
                 {
-        auto sender = req.get_param_value("sender");
-        auto receiver = req.get_param_value("receiver");
-        auto amountStr = req.get_param_value("amount");
-        auto sender_user_id = req.get_param_value("sender_user_id");
+        std::string sender;
+        std::string receiver;
+        std::string amountStr;
+        std::string timestamp;
+        std::string sender_user_id;
+        std::string signature; // base64
+        std::string pubKeyPem; // optional
+
+        // Support both application/x-www-form-urlencoded and multipart/form-data
+        if (req.is_multipart_form_data()) {
+            if (req.form.has_field("sender")) sender = req.form.get_field("sender");
+            if (req.form.has_field("receiver")) receiver = req.form.get_field("receiver");
+            if (req.form.has_field("amount")) amountStr = req.form.get_field("amount");
+            if (req.form.has_field("timestamp")) timestamp = req.form.get_field("timestamp");
+            if (req.form.has_field("sender_user_id")) sender_user_id = req.form.get_field("sender_user_id");
+            if (req.form.has_field("signature")) signature = req.form.get_field("signature");
+            if (req.form.has_field("pubKeyPem")) pubKeyPem = req.form.get_field("pubKeyPem");
+        } else {
+            sender = req.get_param_value("sender");
+            receiver = req.get_param_value("receiver");
+            amountStr = req.get_param_value("amount");
+            timestamp = req.get_param_value("timestamp");
+            sender_user_id = req.get_param_value("sender_user_id");
+            signature = req.get_param_value("signature");
+            pubKeyPem = req.get_param_value("pubKeyPem");
+        }
 
         double amount = std::stod(amountStr);
 
@@ -61,7 +86,7 @@ int main()
             return res.set_content(response.dump(), "application/json"); 
         }
 
-
+        // validate if sender and reciever wallet exists
          if(!walletManager.walletExists(sender) || !walletManager.walletExists(receiver)){
                    nlohmann::json response = {
             {"success", false},
@@ -72,6 +97,53 @@ int main()
             return res.set_content(response.dump(), "application/json"); 
         }
 
+        // If pubKeyPem provided, ensure it matches stored pubkey for sender (if any), or bind it
+        std::string storedPub = walletManager.getPublicKey(sender);
+        
+        if (storedPub.empty() && !pubKeyPem.empty()) {
+            // bind provided pubkey to sender wallet
+            walletManager.bindPublicKeyToWallet(sender, pubKeyPem);
+            storedPub = pubKeyPem;
+        }
+
+        if (storedPub.empty()){
+            nlohmann::json response = {
+                {"success", false},
+                {"message", "Public key not found for sender"}
+            };
+
+            
+            set_cors(res);
+            return res.set_content(response.dump(), "application/json"); 
+        }
+
+        std::ostringstream oss;
+        {
+            // format amount in a temp stream so std::fixed doesn't affect later output
+            std::ostringstream amt_ss;
+            // amt_ss << std::fixed << std::setprecision(8) << amount;
+            oss << sender << "|" << receiver << "|" << amountStr;
+        }
+
+        std::string message = oss.str();
+
+        std::cout << "storedPub : " << storedPub << std::endl;
+        std::cout << "message : " << message << std::endl;
+        std::cout << "signature : " << signature << std::endl;
+
+
+        bool ok = Crypto::verifySignaturePEM(storedPub, message, signature);
+        
+        if (!ok) {
+            nlohmann::json response = {
+                {"success", false},
+                {"message", "Invalid Signature"}
+            };
+
+            
+            set_cors(res);
+            return res.set_content(response.dump(), "application/json"); 
+        }
 
         Transaction tx(sender, receiver, amount);
         blockchain.addTransaction(tx);
@@ -114,6 +186,7 @@ int main()
                               set_cors(res);
                               res.set_content(response.dump(), "application/json");
                    } });
+
     // GET /balance/:wallet
     server.Get(R"(/balance/(.*))", [&](const httplib::Request &req, httplib::Response &res)
                {
@@ -141,21 +214,33 @@ int main()
 
     server.Post("/wallet/init", [&](const httplib::Request &req, httplib::Response &res)
                 {
-        auto userId = req.get_param_value("user_id");
-        std::cout << "user id : " << userId << std::endl;
+        std::string userId;
+        std::string pubKey;
+
+        // Support both application/x-www-form-urlencoded and multipart/form-data
+        if (req.is_multipart_form_data()) {
+            if (req.form.has_field("user_id")) {
+                userId = req.form.get_field("user_id");
+            }
+            if (req.form.has_field("pubKeyPem")) {
+                pubKey = req.form.get_field("pubKeyPem");
+            }
+        } else {
+            userId = req.get_param_value("user_id");
+            pubKey = req.has_param("pubKeyPem") ? req.get_param_value("pubKeyPem") : std::string();
+        }
 
         std::string wallet = walletManager.getOrCreateWallet(userId);
         double balance = walletManager.getBalance(wallet);
 
+         if (!pubKey.empty()) {
+        walletManager.bindPublicKeyToWallet(wallet, pubKey);
+    }
         // std::string json = "{ \"wallet\": \"" + wallet +
         //                "\", \"balance\": " + std::to_string(balance) + " }";
        nlohmann::json response;
 
-       response = {
-        {"success", true},
-        {"wallet", wallet},
-        {"balance", balance}
-       };
+     response = { {"success", true}, {"wallet", wallet}, {"balance", balance}, {"pubKeyBound", !pubKey.empty()} };
 
     set_cors(res);
     res.set_content(response.dump(), "application/json"); });

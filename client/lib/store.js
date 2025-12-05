@@ -11,9 +11,15 @@ export const useWalletStore = create()(persist(
         basePrice : 10,
         walletAddress: "",
         balance: 0.00,
+        publicKey : "", 
+        privateKey : "", 
         setWalletInfo : (payload) => set({
             walletAddress : payload.walletAddress,
             balance : payload.walletBalance
+        }),
+        setPemKeys : (payload) => set({
+            publicKey : payload.pubPem,
+            privateKey : payload.privPem
         })
     })),{
         name : "wallet-storage",
