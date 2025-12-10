@@ -76,16 +76,7 @@ int main()
 
         double amount = std::stod(amountStr);
 
-        if(amount > walletManager.getBalance(sender)){
-                   nlohmann::json response = {
-            {"success", false},
-            {"message", "Insufficient funds"},
-            };
-
-            set_cors(res);
-            return res.set_content(response.dump(), "application/json"); 
-        }
-
+       
         // validate if sender and reciever wallet exists
          if(!walletManager.walletExists(sender) || !walletManager.walletExists(receiver)){
                    nlohmann::json response = {
@@ -146,6 +137,18 @@ int main()
         }
 
         Transaction tx(sender, receiver, amount);
+
+        if(blockchain.validateTransaction(tx)){
+                   nlohmann::json response = {
+            {"success", false},
+            {"message", "Insufficient funds"},
+            };
+
+            set_cors(res);
+            return res.set_content(response.dump(), "application/json"); 
+        }
+
+
         blockchain.addTransaction(tx);
 
         // return a simple JSON object confirming the operation
@@ -282,6 +285,69 @@ int main()
 
     set_cors(res);
     res.set_content(response.dump(), "application/json"); });
+
+    // GET /blockchain/blocks?limit=50&offset=0
+    server.Get("/blockchain/blocks", [&](const httplib::Request &req, httplib::Response &res)
+               {
+    int limit = 50;
+    int offset = 0;
+    if (req.has_param("limit")) limit = std::stoi(req.get_param_value("limit"));
+    if (req.has_param("offset")) offset = std::stoi(req.get_param_value("offset"));
+
+    auto blocks = blockchain.getBlocks(limit, offset);
+    nlohmann::json j = nlohmann::json::array();
+    for (auto &b : blocks) j.push_back(b.toJSON());
+
+    set_cors(res);
+    res.set_content(j.dump(4), "application/json"); });
+
+    // GET /blockchain/block/:index
+    server.Get(R"(/blockchain/block/(\d+))", [&](const httplib::Request &req, httplib::Response &res)
+               {
+    int idx = std::stoi(req.matches[1]);
+    if (idx < 0 || idx >= (int)blockchain.getChain().size()) {
+        res.status = 404;
+        res.set_content("{\"error\":\"block not found\"}", "application/json");
+        return;
+    }
+    Block b = blockchain.getBlockByIndex(idx);
+    set_cors(res);
+    res.set_content(b.toJSON().dump(4), "application/json"); });
+
+    // GET /tx/:txid
+    server.Get(R"(/tx/(.*))", [&](const httplib::Request &req, httplib::Response &res)
+               {
+    std::string txid = req.matches[1];
+    Transaction tx = blockchain.getTransactionById(txid);
+    if (tx.id.empty()) {
+        res.status = 404;
+        res.set_content("{\"success\":false,\"message\":\"tx not found\"}", "application/json");
+        return;
+    }
+    set_cors(res);
+    res.set_content(tx.toJSON().dump(4), "application/json"); });
+
+    // GET /wallet/:wallet/history
+    server.Get(R"(/wallet/(.*)/history)", [&](const httplib::Request &req, httplib::Response &res)
+               {
+    std::string wallet = req.matches[1];
+    std::cout << "wallet id : " << wallet << std::endl;
+    auto history = blockchain.getTransactionsForWallet(wallet);
+    nlohmann::json j = nlohmann::json::array();
+    for (auto &tx : history) j.push_back(tx.toJSON());
+    set_cors(res);
+    res.set_content(j.dump(4), "application/json"); });
+
+    // GET /transactions/latest?limit=20
+    server.Get("/transactions/latest", [&](const httplib::Request &req, httplib::Response &res)
+               {
+    int limit = 20;
+    if (req.has_param("limit")) limit = std::stoi(req.get_param_value("limit"));
+    auto latest = blockchain.getLatestTransactions(limit);
+    nlohmann::json j = nlohmann::json::array();
+    for (auto &tx : latest) j.push_back(tx.toJSON());
+    set_cors(res);
+    res.set_content(j.dump(4), "application/json"); });
 
     std::cout << "Server running on http://localhost:8080\n";
     server.listen("0.0.0.0", 8080);

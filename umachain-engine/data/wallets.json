@@ -1,16 +1,14 @@
 {
     "balances": {
-        "SYSTEM": -2.0,
-        "WALLET_432970": 0.0,
-        "WALLET_943658": 0.0,
-        "ab": 2.0
+        "WALLET_448529": 0.0,
+        "WALLET_690477": 0.0
     },
     "pubkeys": {
-        "WALLET_432970": "-----BEGIN PUBLIC KEY-----\nMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE8PISKHEhhsRnMSi/ctL/JlEUO2UK\nBTvNHWBaqXaoerYwA7OQEdPQVhNv79RUDerA0T/lfImI0ag/Aomk8+QjvQ==\n-----END PUBLIC KEY-----",
-        "WALLET_943658": "-----BEGIN PUBLIC KEY-----\nMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE8OPN+579u/0TupssXyXDPDo4s0Vs\nFfK9KGBM/2rvm6Nb9KqPQvrqCCisVUR0bpxnKNdE3CGnijLPj1D/v0OXFw==\n-----END PUBLIC KEY-----"
+        "WALLET_448529": "-----BEGIN PUBLIC KEY-----\nMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEalzgKrl9DfTSb69HMEs4/bcuQa0u\nO2Owo5hT+ZcJRYm/NhDA4F8Z8dHciyBNX0ytBfHMvTlRH/C6cOhoe0PCDQ==\n-----END PUBLIC KEY-----",
+        "WALLET_690477": "-----BEGIN PUBLIC KEY-----\nMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEljL4Xr0RAqOHw4M1uiR/xfdX1D8A\n1I+Lypg1icf89eIB4dDNTDJTa3DUHP4GDt9IsyayRNwQVI+mVPdAghR/iw==\n-----END PUBLIC KEY-----"
     },
     "users": {
-        "user_35uZaxOuLgZIqJVhDHhrdhqjfCs": "WALLET_432970",
-        "user_36FJRn63DR7Qy4SCVBaBjWnFj1S": "WALLET_943658"
+        "user_35uZaxOuLgZIqJVhDHhrdhqjfCs": "WALLET_448529",
+        "user_36FJRn63DR7Qy4SCVBaBjWnFj1S": "WALLET_690477"
     }
 }

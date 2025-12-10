@@ -38,7 +38,7 @@ Block Blockchain::getLatestBlock()
 
 void Blockchain::addTransaction(const Transaction &tx)
 {
-    
+
     mempool.push_back(tx);
 }
 
@@ -69,16 +69,17 @@ bool Blockchain::minePendingTransactions(const std::string &minerAddress, Wallet
 
     // ctime() returns a string that usually ends with '\n' (and on Windows may include '\r').
     // Remove trailing CR/LF so timestamps don't introduce blank lines in saved files.
-    while (!timestr.empty() && (timestr.back() == '\n' || timestr.back() == '\r')) {
+    while (!timestr.empty() && (timestr.back() == '\n' || timestr.back() == '\r'))
+    {
         timestr.pop_back();
     }
 
-
-    /* 
-        setting the pending transactions status to confirmed thhose are about to be added to a new block that are going to be added to the blockchain 
+    /*
+        setting the pending transactions status to confirmed thhose are about to be added to a new block that are going to be added to the blockchain
     */
-    for (auto &tx : mempool) {
-         // deduct from sender
+    for (auto &tx : mempool)
+    {
+        // deduct from sender
         walletManager.updateBalance(tx.sender, -tx.amount);
 
         // credit receiver
@@ -128,6 +129,34 @@ double Blockchain::getBalance(const std::string &walletAddress)
     return balance;
 }
 
+double Blockchain::getEffectiveBalance(const std::string &wallet) {
+    double confirmed = getBalance(wallet);
+    double pendingOut = 0;
+
+    for (const Transaction &tx : mempool) {
+        if (tx.sender == wallet) {
+            pendingOut += tx.amount;
+        }
+    }
+
+    std::cout << "confirmed : " << confirmed << std::endl;
+    std::cout << "pending out : " << pendingOut << std::endl;
+    std::cout << "confirmed - pendingOut = " << confirmed - pendingOut << std::endl;
+    
+    return confirmed - pendingOut;
+}
+
+bool Blockchain::validateTransaction(const Transaction &tx) {
+    double effective = getEffectiveBalance(tx.sender);
+
+    if (effective < tx.amount) {
+        std::cerr << "Rejected: double-spend attempt (insufficient effective funds)\n";
+        return false;
+    }
+
+    return true;
+}
+
 // -------------------------
 //      Validate the chain
 // -------------------------
@@ -156,28 +185,32 @@ bool Blockchain::isValidChain()
 // -----------------------------
 //    Save chain to a .dat file
 // -----------------------------
-void Blockchain::saveToFile() {
+void Blockchain::saveToFile()
+{
     saveToJSON();
 }
 
-void Blockchain::saveToJSON() {
+void Blockchain::saveToJSON()
+{
     nlohmann::json jChain = nlohmann::json::array();
 
     for (const auto &block : chain)
         jChain.push_back(block.toJSON());
 
     std::ofstream file("../data/blockchain.json");
-    file << jChain.dump(4);   // pretty print JSON
+    file << jChain.dump(4); // pretty print JSON
 }
 
 // -----------------------------
 //     Load chain from .dat file
 // -----------------------------
-void Blockchain::loadFromFile() {
+void Blockchain::loadFromFile()
+{
     loadFromJSON();
 }
 
-void Blockchain::loadFromJSON() {
+void Blockchain::loadFromJSON()
+{
     std::ifstream file("../data/blockchain.json");
     if (!file.good())
         return;
@@ -199,8 +232,7 @@ void Blockchain::loadFromJSON() {
             Transaction tx(
                 jTx["sender"],
                 jTx["receiver"],
-                jTx["amount"]
-            );
+                jTx["amount"]);
             tx.status = (TxStatus)jTx["status"];
             txs.push_back(tx);
         }
@@ -210,4 +242,96 @@ void Blockchain::loadFromJSON() {
 
         chain.push_back(block);
     }
+}
+
+// ================================
+// Explorer: pagination for blocks
+// ================================
+std::vector<Block> Blockchain::getBlocks(int limit, int offset)
+{
+    std::vector<Block> result;
+
+    int total = chain.size();
+    if (offset >= total)
+        return result;
+
+    int end = std::min(offset + limit, total);
+
+    for (int i = offset; i < end; i++)
+    {
+        result.push_back(chain[i]);
+    }
+    return result;
+}
+
+// ================================
+// Get block by index
+// ================================
+Block Blockchain::getBlockByIndex(int index)
+{
+    if (index < 0 || index >= (int)chain.size())
+        throw std::runtime_error("Block index out of range");
+
+    return chain[index];
+}
+
+// ================================
+// Get ALL tx for a given wallet
+// ================================
+std::vector<Transaction> Blockchain::getTransactionsForWallet(const std::string &walletId)
+{
+    std::vector<Transaction> out;
+    // mempool pending transactions first (optional)
+    for (const auto &tx : mempool)
+    {
+        if (tx.sender == walletId || tx.receiver == walletId)
+            out.push_back(tx);
+    }
+    for (auto it = chain.rbegin(); it != chain.rend(); ++it)
+    {
+        for (const auto &tx : it->transactions)
+        {
+            if (tx.sender == walletId || tx.receiver == walletId)
+                out.push_back(tx);
+        }
+    }
+    return out; // newest first
+}
+
+// ================================
+// Get a single tx by ID
+// ================================
+Transaction Blockchain::getTransactionById(const std::string &txid)
+{
+    for (const auto &tx : mempool)
+        if (tx.id == txid)
+            return tx;
+    for (const auto &block : chain)
+        for (const auto &tx : block.transactions)
+            if (tx.id == txid)
+                return tx;
+    return Transaction(); // empty
+}
+
+// ================================
+// Get latest N transactions
+// ================================
+std::vector<Transaction> Blockchain::getLatestTransactions(int limit)
+{
+    std::vector<Transaction> out;
+    for (auto it = chain.rbegin(); it != chain.rend() && (int)out.size() < limit; ++it)
+        for (const auto &tx : it->transactions)
+        {
+            out.push_back(tx);
+            if ((int)out.size() >= limit)
+                break;
+        }
+    // optionally add mempool at front
+    for (const auto &tx : mempool)
+    {
+        if ((int)out.size() >= limit)
+            break;
+        out.insert(out.begin(), tx); // pending at top
+    }
+    return out;
 }

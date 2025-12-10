@@ -21,9 +21,11 @@ public:
     Block createGenesisBlock();
     Block getLatestBlock();
 
-    void addTransaction(const Transaction &tx);                    // add transaction to mempool for mining
+    void addTransaction(const Transaction &tx);                                                  // add transaction to mempool for mining
     bool minePendingTransactions(const std::string &minerAddress, WalletManager &walletManager); // mine pending transactions and adds to the blockchain
     double getBalance(const std::string &walletAddress);
+    double getEffectiveBalance(const std::string &wallet);
+    bool validateTransaction(const Transaction &tx);
 
     bool isValidChain();
     std::vector<Block> getChain()
@@ -31,6 +33,12 @@ public:
         return chain;
     };
     std::vector<Transaction> getMempool() { return mempool; };
+
+    std::vector<Transaction> getTransactionsForWallet(const std::string &walletId);
+    Transaction getTransactionById(const std::string &txid);
+    std::vector<Transaction> getLatestTransactions(int limit = 20);
+    Block getBlockByIndex(int index);
+    std::vector<Block> getBlocks(int limit = 100, int offset = 0);
 
     void saveToFile();
     void loadFromFile();
