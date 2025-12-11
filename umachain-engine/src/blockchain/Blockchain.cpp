@@ -129,12 +129,15 @@ double Blockchain::getBalance(const std::string &walletAddress)
     return balance;
 }
 
-double Blockchain::getEffectiveBalance(const std::string &wallet) {
+double Blockchain::getEffectiveBalance(const std::string &wallet)
+{
     double confirmed = getBalance(wallet);
     double pendingOut = 0;
 
-    for (const Transaction &tx : mempool) {
-        if (tx.sender == wallet) {
+    for (const Transaction &tx : mempool)
+    {
+        if (tx.sender == wallet)
+        {
             pendingOut += tx.amount;
         }
     }
@@ -142,14 +145,16 @@ double Blockchain::getEffectiveBalance(const std::string &wallet) {
     std::cout << "confirmed : " << confirmed << std::endl;
     std::cout << "pending out : " << pendingOut << std::endl;
     std::cout << "confirmed - pendingOut = " << confirmed - pendingOut << std::endl;
-    
+
     return confirmed - pendingOut;
 }
 
-bool Blockchain::validateTransaction(const Transaction &tx) {
+bool Blockchain::validateTransaction(const Transaction &tx)
+{
     double effective = getEffectiveBalance(tx.sender);
 
-    if (effective < tx.amount) {
+    if (effective < tx.amount)
+    {
         std::cerr << "Rejected: double-spend attempt (insufficient effective funds)\n";
         return false;
     }
@@ -334,4 +339,34 @@ std::vector<Transaction> Blockchain::getLatestTransactions(int limit)
         out.insert(out.begin(), tx); // pending at top
     }
     return out;
+}
+
+void Blockchain::addConfirmedTransaction(const Transaction &tx)
+{
+    // create a copy of the transaction and ensure it's marked confirmed
+    Transaction txCopy = tx;
+    txCopy.status = TxStatus::CONFIRMED;
+
+    int newIndex = chain.size();
+    time_t now = time(0);
+    std::string timestr = ctime(&now);
+    while (!timestr.empty() && (timestr.back() == '\n' || timestr.back() == '\r'))
+        timestr.pop_back();
+
+    // make a block with just this transaction
+    std::vector<Transaction> txs;
+    txs.push_back(txCopy);
+
+    Block newBlock(newIndex, timestr, txs, getLatestBlock().hash);
+
+    // Mine with zero difficulty so it produces a hash without looping (fast and deterministic)
+    // Backup current difficulty and restore after if you want; here we set difficulty 0 for this block
+    int savedDifficulty = difficulty;
+    newBlock.mineBlock(0); // or use difficulty=0 to skip pow
+    // restore difficulty if your code uses global difficulty
+    difficulty = savedDifficulty;
+
+    // Add block, save
+    chain.push_back(newBlock);
+    saveToFile();
 }

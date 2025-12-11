@@ -47,8 +47,9 @@ const WalletSync = ({ children }) => {
                         // window.localStorage.setItem("walletBalance", data?.balance);
 
                         setWalletInfo({
+                            basePrice : data.basePrice,
                             walletAddress: data.wallet,
-                            walletBalance: data.balance
+                            balance: data.balance
                         })
 
                         setPemKeys({

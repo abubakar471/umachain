@@ -32,7 +32,7 @@ const YourBalance = () => {
             </div>
 
             <div className='flex flex-col lg:flex-row items-center justify-between gap-x-4 gap-y-4 pt-3 lg:pt-6'>
-                <h4 className='text-4xl text-center lg:text-start text-neutral-300 font-semibold pt-4 space-y-2'>{(balance).toFixed(2)} UMC <sup className='text-2xl text-[#FDE300]'>${(balance * basePrice).toFixed(2)} USD</sup></h4>
+                <h4 className='text-4xl text-center lg:text-start text-neutral-300 font-semibold pt-4 space-y-2'>{(balance).toFixed(2)} UMC <sup className='text-2xl text-[#FDE300]'>${(balance / basePrice).toFixed(2)} USD</sup></h4>
 
                 <div className='flex items-center gap-x-3'>
                     <Link href={"/account/buy"}>

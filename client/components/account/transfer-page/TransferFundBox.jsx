@@ -21,7 +21,7 @@ const TransferFundBox = () => {
     const [errMessage, setErrMessage] = useState("");
     const [isSending, setIsSending] = useState(false);
 
-    const { walletAddress, basePrice, balance, publicKey, privateKey } = useWalletStore(state => state);
+    const { walletAddress, basePrice, balance, publicKey, privateKey, setWalletInfo } = useWalletStore(state => state);
     const { user, isSignedIn, isLoaded } = useUser();
 
     const handleAmountChange = (e, flag = "") => {
@@ -33,9 +33,9 @@ const TransferFundBox = () => {
 
             if (!flag) {
                 setAmount(e.target.value);
-                setAmountOnDollars(e.target.value * basePrice);
+                setAmountOnDollars(e.target.value / basePrice);
             } else {
-                setAmount(e.target.value / basePrice);
+                setAmount(e.target.value * basePrice);
                 setAmountOnDollars(e.target.value);
             }
 
@@ -84,7 +84,12 @@ const TransferFundBox = () => {
                 setReceiver("");
                 setAmount(0.0);
                 setAmountOnDollars(0.0);
-                
+                setWalletInfo({
+                    basePrice, 
+                    walletAddress,
+                    balance : data.new_balance
+                });
+
                 toast.success("Transaction is in progress")
             }
 

@@ -39,6 +39,7 @@ public:
     std::vector<Transaction> getLatestTransactions(int limit = 20);
     Block getBlockByIndex(int index);
     std::vector<Block> getBlocks(int limit = 100, int offset = 0);
+    void addConfirmedTransaction(const Transaction &tx);
 
     void saveToFile();
     void loadFromFile();

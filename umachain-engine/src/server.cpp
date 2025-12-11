@@ -12,6 +12,39 @@ WalletManager walletManager;
 
 Blockchain blockchain; // global blockchain instance or object
 
+// exchange rate: 1 USD = UMA_PER_USD UmaCoin
+static constexpr double UMA_PER_USD = 0.1; // change as you like
+
+// Simple mock charging function (returns true = success)
+static bool mockChargeCard(const std::string &cardNumber, double usdAmount)
+{
+    // you can implement basic validation if you want
+    if (cardNumber.empty() || usdAmount <= 0)
+        return false;
+    // simulate simple failure for card number "4000-0000-0000-0000" for testing
+    if (cardNumber.find("4000") == 0)
+        return false;
+    return true;
+}
+
+// Mock sending money to a bank (selling)
+static bool mockSendToBank(const std::string &bankAccount, double usdAmount)
+{
+    if (bankAccount.empty() || usdAmount <= 0)
+        return false;
+    // you may simulate failures similarly
+    return true;
+}
+
+static double usdToUma(double usd)
+{
+    return usd * UMA_PER_USD;
+}
+static double umaToUsd(double uma)
+{
+    return uma / UMA_PER_USD;
+}
+
 int main()
 {
 
@@ -138,7 +171,7 @@ int main()
 
         Transaction tx(sender, receiver, amount);
 
-        if(blockchain.validateTransaction(tx)){
+        if(!blockchain.validateTransaction(tx)){
                    nlohmann::json response = {
             {"success", false},
             {"message", "Insufficient funds"},
@@ -150,11 +183,13 @@ int main()
 
 
         blockchain.addTransaction(tx);
+        double new_balance = blockchain.getEffectiveBalance(sender);
 
         // return a simple JSON object confirming the operation
         nlohmann::json response = {
             {"success", true},
             {"message", "Transaction added successfully"},
+            {"new_balance", new_balance},
         };
 
         set_cors(res);
@@ -243,7 +278,7 @@ int main()
         //                "\", \"balance\": " + std::to_string(balance) + " }";
        nlohmann::json response;
 
-     response = { {"success", true}, {"wallet", wallet}, {"balance", balance}, {"pubKeyBound", !pubKey.empty()} };
+     response = { {"success", true}, {"wallet", wallet}, {"balance", balance}, {"basePrice", UMA_PER_USD}, {"pubKeyBound", !pubKey.empty()} };
 
     set_cors(res);
     res.set_content(response.dump(), "application/json"); });
@@ -348,6 +383,146 @@ int main()
     for (auto &tx : latest) j.push_back(tx.toJSON());
     set_cors(res);
     res.set_content(j.dump(4), "application/json"); });
+
+    server.Post("/buy", [&](const httplib::Request &req, httplib::Response &res)
+                {
+
+    std::string wallet;
+    std::string usdStr;
+    std::string cardNumber;
+
+    if (req.is_multipart_form_data()) {
+        if (req.form.has_field("wallet")) wallet = req.form.get_field("wallet");
+        if (req.form.has_field("usd")) usdStr = req.form.get_field("usd");
+        if (req.form.has_field("cardNumber")) cardNumber = req.form.get_field("cardNumber");
+        } else{
+        wallet = req.get_param_value("wallet");
+        usdStr = req.get_param_value("usd");
+        cardNumber = req.get_param_value("cardNumber");
+    }
+
+
+    if (wallet.empty() || usdStr.empty() || cardNumber.empty()) {
+        nlohmann::json response = { {"success", false}, {"message", "Missing parameters"} };
+        set_cors(res);
+        return res.set_content(response.dump(), "application/json");
+    }
+
+    double usd = 0.0;
+    try { usd = std::stod(usdStr); } catch (...) { usd = 0.0; }
+
+    if (usd <= 0) {
+        nlohmann::json response = { {"success", false}, {"message", "Invalid USD amount"} };
+        set_cors(res);
+        return res.set_content(response.dump(), "application/json");
+    }
+
+    if (!walletManager.walletExists(wallet)) {
+        nlohmann::json response = { {"success", false}, {"message", "Wallet not found"} };
+        set_cors(res);
+        return res.set_content(response.dump(), "application/json");
+    }
+
+    // Mock charge card
+    if (!mockChargeCard(cardNumber, usd)) {
+        nlohmann::json response = { {"success", false}, {"message", "Card charge failed (mock)"} };
+        set_cors(res);
+        return res.set_content(response.dump(), "application/json");
+    }
+
+    // Convert and credit wallet
+    double umaAmount = usdToUma(usd);
+
+    walletManager.updateBalance(wallet, umaAmount);
+
+    // create a confirmed transaction record: from "FIAT" to wallet
+    Transaction tx("FIAT", wallet, umaAmount);
+    tx.status = TxStatus::CONFIRMED;
+    // optional: attach metadata about fiat amount
+    // tx.meta["fiat_amount"] = usd; // if you added a meta field
+
+    blockchain.addConfirmedTransaction(tx);
+
+    double newBalance = walletManager.getBalance(wallet);
+
+    nlohmann::json response = {
+        {"success", true},
+        {"message", "Purchase successful (mock)"},
+        {"wallet", wallet},
+        {"credited_uma", umaAmount},
+        {"usd_charged", usd},
+        {"new_balance", newBalance}
+    };
+
+    set_cors(res);
+    res.set_content(response.dump(), "application/json"); });
+
+    server.Post("/sell", [&](const httplib::Request &req, httplib::Response &res)
+                {
+    std::string wallet = req.get_param_value("wallet");
+    std::string umaStr = req.get_param_value("uma");
+    std::string bankAccount = req.get_param_value("bankAccount");
+
+    if (wallet.empty() || umaStr.empty() || bankAccount.empty()) {
+        nlohmann::json response = { {"success", false}, {"message", "Missing parameters"} };
+        set_cors(res);
+        return res.set_content(response.dump(), "application/json");
+    }
+
+    double umaAmount = 0.0;
+    try { umaAmount = std::stod(umaStr); } catch (...) { umaAmount = 0.0; }
+
+    if (umaAmount <= 0) {
+        nlohmann::json response = { {"success", false}, {"message", "Invalid UMA amount"} };
+        set_cors(res);
+        return res.set_content(response.dump(), "application/json");
+    }
+
+    if (!walletManager.walletExists(wallet)) {
+        nlohmann::json response = { {"success", false}, {"message", "Wallet not found"} };
+        set_cors(res);
+        return res.set_content(response.dump(), "application/json");
+    }
+
+    // Check balance (use walletManager)
+    double balance = walletManager.getBalance(wallet);
+    if (balance < umaAmount) {
+        nlohmann::json response = { {"success", false}, {"message", "Insufficient UMA balance"} };
+        set_cors(res);
+        return res.set_content(response.dump(), "application/json");
+    }
+
+    // convert UMA to USD (mock)
+    double usdAmount = umaToUsd(umaAmount);
+
+    // Mock payout to bank
+    if (!mockSendToBank(bankAccount, usdAmount)) {
+        nlohmann::json response = { {"success", false}, {"message", "Bank payout failed (mock)"} };
+        set_cors(res);
+        return res.set_content(response.dump(), "application/json");
+    }
+
+    // debit user immediately
+    walletManager.updateBalance(wallet, -umaAmount);
+
+    // record a confirmed tx from wallet -> FIAT
+    Transaction tx(wallet, "FIAT", umaAmount);
+    tx.status = TxStatus::CONFIRMED;
+    blockchain.addConfirmedTransaction(tx);
+
+    double newBalance = walletManager.getBalance(wallet);
+
+    nlohmann::json response = {
+        {"success", true},
+        {"message", "Sell executed (mock)"},
+        {"wallet", wallet},
+        {"debited_uma", umaAmount},
+        {"usd_sent", usdAmount},
+        {"new_balance", newBalance}
+    };
+
+    set_cors(res);
+    res.set_content(response.dump(), "application/json"); });
 
     std::cout << "Server running on http://localhost:8080\n";
     server.listen("0.0.0.0", 8080);
