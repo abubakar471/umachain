@@ -1,4 +1,4 @@
-import BuySellModal from '@/components/account/account-buy-page/BuySellModal'
+import BuyDialog from '@/components/account/account-buy-page/BuyDialog'
 import YourBalance from '@/components/account/account-page/YourBalance'
 import { Wallet } from 'lucide-react'
 import React from 'react'
@@ -12,7 +12,7 @@ const BuyPage = () => {
       </h1>
 
       <div className='mt-10'>
-          <BuySellModal />
+          <BuyDialog />
       </div>
     </div>
   )

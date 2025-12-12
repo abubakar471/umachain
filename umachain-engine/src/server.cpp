@@ -459,9 +459,19 @@ int main()
 
     server.Post("/sell", [&](const httplib::Request &req, httplib::Response &res)
                 {
-    std::string wallet = req.get_param_value("wallet");
-    std::string umaStr = req.get_param_value("uma");
-    std::string bankAccount = req.get_param_value("bankAccount");
+    std::string wallet;
+    std::string umaStr;
+    std::string bankAccount;
+
+    if (req.is_multipart_form_data()) {
+        if (req.form.has_field("wallet")) wallet = req.form.get_field("wallet");
+        if (req.form.has_field("uma")) umaStr = req.form.get_field("uma");
+        if (req.form.has_field("bankAccount")) bankAccount = req.form.get_field("bankAccount");
+        } else{
+        wallet = req.get_param_value("wallet");
+        umaStr = req.get_param_value("uma");
+        bankAccount = req.get_param_value("bankAccount");
+    }
 
     if (wallet.empty() || umaStr.empty() || bankAccount.empty()) {
         nlohmann::json response = { {"success", false}, {"message", "Missing parameters"} };
@@ -485,7 +495,7 @@ int main()
     }
 
     // Check balance (use walletManager)
-    double balance = walletManager.getBalance(wallet);
+    double balance = blockchain.getEffectiveBalance(wallet);
     if (balance < umaAmount) {
         nlohmann::json response = { {"success", false}, {"message", "Insufficient UMA balance"} };
         set_cors(res);
@@ -523,6 +533,8 @@ int main()
 
     set_cors(res);
     res.set_content(response.dump(), "application/json"); });
+
+    
 
     std::cout << "Server running on http://localhost:8080\n";
     server.listen("0.0.0.0", 8080);
