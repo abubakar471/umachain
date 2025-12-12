@@ -69,19 +69,14 @@ const BuyDialog = () => {
                 walletAddress,
                 balance: data?.new_balance
             })
-            router.push("/account");
+            router.push("/account/transactions");
         } catch (err) {
             console.log(err);
-            setErrMessage("Failed to buy UMC");
+            toast.error("Failed to buy UMC");
             setIsLoading(false);
         }
     }
 
-    useEffect(() => {
-        if (errMessage) {
-            toast.error(errMessage);
-        }
-    }, [errMessage])
     return (
         <div>
             <div className='bg-[#1C1C1C] backdrop:blur-2xl p-6 rounded-lg max-w-2xl mx-auto min-h-[600px] max-h-max'>

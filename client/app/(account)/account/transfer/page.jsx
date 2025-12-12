@@ -7,7 +7,7 @@ const TransferPage = () => {
   return (
     <div className='max-w-5xl mx-auto'>
       <h3 className='text-3xl text-neutral-400 font-semibold flex items-center gap-x-2 mt-6 mb-10'>
-        <ArrowLeftRight />
+        <ArrowLeftRight className='text-[#FDE300]' />
         Transfer Funds
       </h3>
 

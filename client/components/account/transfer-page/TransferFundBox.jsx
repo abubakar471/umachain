@@ -10,6 +10,7 @@ import { useWalletStore } from '@/lib/store'
 import { useUser } from '@clerk/nextjs'
 import axios from 'axios'
 import { Globe, Send } from 'lucide-react'
+import { useRouter } from 'next/navigation'
 import React, { useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
 
@@ -23,7 +24,8 @@ const TransferFundBox = () => {
 
     const { walletAddress, basePrice, balance, publicKey, privateKey, setWalletInfo } = useWalletStore(state => state);
     const { user, isSignedIn, isLoaded } = useUser();
-
+    const router = useRouter();
+    
     const handleAmountChange = (e, flag = "") => {
         try {
             setErrMessage("");
@@ -79,7 +81,7 @@ const TransferFundBox = () => {
             const data = res?.data;
 
             if (!data?.success) {
-                setErrMessage(data?.message);
+                toast.error(data?.message);
             } else {
                 setReceiver("");
                 setAmount(0.0);
@@ -89,24 +91,18 @@ const TransferFundBox = () => {
                     walletAddress,
                     balance : data.new_balance
                 });
-
-                toast.success("Transaction is in progress")
+                router.push("/account/transactions");
+                toast.success("Transaction is in progress");
             }
 
             setIsSending(false);
         } catch (err) {
             console.log(err);
-            setErrMessage("Failed to transfer funds");
+            toast.error("Failed to transfer funds");
             setIsSending(false);
         }
     }
 
-
-    useEffect(() => {
-        if (errMessage) {
-            toast.error(errMessage);
-        }
-    }, [errMessage])
     return (
         (isLoaded && isSignedIn) && (
             <div>
@@ -137,7 +133,7 @@ const TransferFundBox = () => {
                                         if ((e.target.value <= balance) && (e.target.value >= 0)) {
                                             handleAmountChange(e);
                                         } else {
-                                            setErrMessage("Insufficient Funds");
+                                            toast.error("Insufficient Funds");
                                         }
                                     }}
                                 />
@@ -159,7 +155,7 @@ const TransferFundBox = () => {
                                             if ((e.target.value <= (balance * 10)) && e.target.value >= 0) {
                                                 handleAmountChange(e, "DOLLAR");
                                             } else {
-                                                setErrMessage("Insufficient Funds");
+                                                toast.error("Insufficient Funds");
                                             }
                                         }
                                     }}

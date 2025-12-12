@@ -83,7 +83,7 @@ const WalletSync = ({ children }) => {
                     <div className='flex flex-col gap-y-4 items-center justify-center min-h-screen'>
                         {/* <Logo /> */}
                         <div className='flex items-center gap-x-2 gap-y-2'>
-                            <h1 className='text-4xl text-white'>Please wait, Your Wallet is syncing</h1>
+                            <h1 className='text-xl md:text-3xl lg:text-4xl text-white'>Please wait, Your Wallet is syncing</h1>
                             <Spinner className={"text-[#D4C13E] text-2xl w-10 h-10"} />
                         </div>
                     </div>
