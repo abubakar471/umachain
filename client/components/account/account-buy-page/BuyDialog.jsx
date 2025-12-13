@@ -79,17 +79,13 @@ const BuyDialog = () => {
 
     return (
         <div>
-            <div className='bg-[#1C1C1C] backdrop:blur-2xl p-6 rounded-lg max-w-2xl mx-auto min-h-[600px] max-h-max'>
-                <div className="flex items-center justify-center">
-                    <div className='w-fit flex items-center gap-x-2 p-4 rounded-full bg-[#1F1F1F] text-white'>
-                        <Logo />
-                        Buy UMC
-                    </div>
-
-
-
+            <div className="flex items-center justify-center">
+                <div className='w-fit flex items-center gap-x-2 p-4 rounded-full bg-[#1F1F1F] text-white'>
+                    <Logo />
+                    Buy UMC
                 </div>
-
+            </div>
+            <div className='bg-[#1C1C1C] backdrop:blur-2xl p-6 rounded-lg max-w-2xl mx-auto mt-4 min-h-[600px] max-h-max'>
                 <form onSubmit={handleSubmit} className='space-y-8 mt-6'>
                     <div className='flex flex-col gap-y-2 w-full space-y-4'>
                         <Label className="text-neutral-500" htmlFor="umacoin-amount">Umacoin Amount</Label>

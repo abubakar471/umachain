@@ -23,7 +23,7 @@ public:
     std::string signatureBase64; // signature of canonical string
     std::string pubKeyPem;       // sender's public key, PEM format
 
-    // constructor
+    // constructors
     Transaction();
     Transaction(const std::string &from, const std::string &to, double amt);
 

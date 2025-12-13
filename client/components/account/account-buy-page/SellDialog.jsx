@@ -80,14 +80,13 @@ const SellDialog = () => {
 
     return (
         <div>
-            <div className='bg-[#1C1C1C] backdrop:blur-2xl p-6 rounded-lg max-w-2xl mx-auto min-h-[600px] max-h-max'>
-                {/* <div className="flex items-center justify-center">
-                    <div className='w-fit flex items-center gap-x-2 p-4 rounded-full bg-[#1F1F1F] text-white'>
-                        <Logo />
-                        Sell UMC
-                    </div>
-                </div> */}
-
+            <div className="flex items-center justify-center">
+                <div className='w-fit flex items-center gap-x-2 p-4 rounded-full bg-[#1F1F1F] text-white'>
+                    <Logo />
+                    Sell UMC
+                </div>
+            </div>
+            <div className='bg-[#1C1C1C] backdrop:blur-2xl p-6 rounded-lg max-w-2xl mx-auto mt-4 min-h-[600px] max-h-max'>
                 <div>
                     <div className='flex items-center justify-between'>
                         <h3 className='text-neutral-400'>TOTAL BALANCE</h3>

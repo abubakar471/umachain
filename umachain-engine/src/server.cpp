@@ -370,8 +370,14 @@ int main()
     auto history = blockchain.getTransactionsForWallet(wallet);
     nlohmann::json j = nlohmann::json::array();
     for (auto &tx : history) j.push_back(tx.toJSON());
+    
+    nlohmann::json final_response = {
+        {"success" , true},
+        {"transactions" , j},
+    };
+
     set_cors(res);
-    res.set_content(j.dump(4), "application/json"); });
+    res.set_content(final_response.dump(), "application/json"); });
 
     // GET /transactions/latest?limit=20
     server.Get("/transactions/latest", [&](const httplib::Request &req, httplib::Response &res)
@@ -533,8 +539,6 @@ int main()
 
     set_cors(res);
     res.set_content(response.dump(), "application/json"); });
-
-    
 
     std::cout << "Server running on http://localhost:8080\n";
     server.listen("0.0.0.0", 8080);
