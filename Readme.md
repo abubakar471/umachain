@@ -217,3 +217,24 @@ Helper functions for WalletManager
 - saveToFIle() - this saves the current instances of all userToWallet, walletBalances, walletPublicKey map's data to the wallet.json file.
 
 - loadFromFile() - it loads data from the wallet.json file and put data in all three maps, those are userToWallet, walletBalances and walletPublicKey.
+
+<br><br>
+
+### Sample of wallets.json 
+
+    {
+        "balances": {
+            "SYSTEM": -2.0,
+            "WALLET_621482": 2.0,
+            "WALLET_716470": 150.0,
+            "WALLET_900386": 30.0
+        },
+        "pubkeys": {
+            "WALLET_716470": "-----BEGIN PUBLIC KEY-----\nMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE475Ar0H1NmDF0FQ94WX1AXEclqK6\nJLeLLber5z/8iL4bTFFL20mSnVt82yBdowIO547/n0POiwuhErDZRH3p1Q==\n-----END PUBLIC KEY-----",
+            "WALLET_900386": "-----BEGIN PUBLIC KEY-----\nMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEkSs8XNSsdKjZG7u4gRaqrN8x71iP\n1bs4l0DRUuHY3wLQwoRytP7Tq7MwT/jkMdoWTiThQKhYaWSqj5e87DMRLQ==\n-----END PUBLIC KEY-----"
+        },
+        "users": {
+            "user_35uZaxOuLgZIqJVhDHhrdhqjfCs": "WALLET_900386",
+            "user_36FJRn63DR7Qy4SCVBaBjWnFj1S": "WALLET_716470"
+        }
+    }
