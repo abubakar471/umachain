@@ -15,7 +15,8 @@ const Hero = () => {
                 </div>
             </div>
 
-            <h1 className='text-5xl text-neutral-200 md:text-6xl font-stretch-semi-condensed font-semibold text-center max-w-4xl mx-auto pt-8'>Umacoin - The Future of Seamless <span className='text-[#FDE300] text-center'>Digital Transactions</span> </h1>
+            {/* <h1 className='text-5xl text-neutral-200 md:text-6xl font-stretch-semi-condensed font-semibold text-center max-w-4xl mx-auto pt-8'>Umacoin - The Future of Seamless <span className='text-[#FDE300] text-center'>Digital Transactions</span> </h1> */}
+            <h1 className='text-5xl text-neutral-200 md:text-6xl font-stretch-semi-condensed font-semibold text-center max-w-4xl mx-auto pt-8'>If you don&apos;t want to miss another opportunity <span className='text-[#FDE300] text-center'>like you missed bitcoin</span> </h1>
 
             <p className='max-w-3xl mx-auto text-center text-neutral-400 pt-8'>
                 Umacoin is engineered for speed and scalability, providing a robust, decentralized foundation for the next generation of global commerce. Experience rapid, low-cost payments and unlock new possibilities in the digital economy.
