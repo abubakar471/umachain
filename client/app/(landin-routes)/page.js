@@ -1,3 +1,4 @@
+import Footer from "@/components/landing-page/Footer";
 import Hero from "@/components/landing-page/Hero";
 import Team from "@/components/landing-page/Team";
 import WhatIsUmacoin from "@/components/landing-page/WhatIsUmacoin";
@@ -9,6 +10,7 @@ export default function Home() {
       <Hero />
       <WhatIsUmacoin />
       <Team />
+      <Footer />
     </div>
   );
 }

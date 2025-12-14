@@ -6,7 +6,7 @@ import { ArrowUp } from 'lucide-react'
 
 const WhatIsUmacoin = () => {
     return (
-        <div className='pb-20'>
+        <div className='pb-40'>
             <div className='max-w-7xl mx-auto'>
                 <h2 className='text-5xl text-neutral-200 font-semibold text-center'>What is Umacoin?</h2>
 
