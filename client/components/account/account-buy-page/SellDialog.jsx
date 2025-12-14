@@ -73,7 +73,7 @@ const SellDialog = () => {
             router.push("/account/transactions");
         } catch (err) {
             console.log(err);
-            toast.error("Failed to buy UMC");
+            toast.error("Failed to sell UMC");
             setIsLoading(false);
         }
     }
