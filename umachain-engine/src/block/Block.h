@@ -16,7 +16,6 @@ class Block
         std::string hash;
         int nonce;
 
-        // Constructor declaration (defined in Block.cpp)
         Block(int idx, const std::string &time, const std::vector<Transaction> &txs, const std::string &prevHash);
 
         std::string calculateHash();

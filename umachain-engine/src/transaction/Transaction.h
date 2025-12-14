@@ -27,6 +27,7 @@ public:
     Transaction();
     Transaction(const std::string &from, const std::string &to, double amt);
 
+    // helpers
     nlohmann::json toJSON() const;
     static Transaction fromJSON(const nlohmann::json &j);
     static std::string generateId(const std::string &sender, const std::string &receiver, double amount, long long timestamp);

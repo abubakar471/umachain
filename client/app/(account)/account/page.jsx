@@ -28,7 +28,7 @@ const Accountpage = () => {
 
           </div>
           <p className='text-lg text-neutral-500 pt-4'>
-            Use your credit card, bank account, or payment app to buy Bitcoin and other select cryptocurrencies.
+            Use your credit card, bank account, or payment app to buy Umacoin and other select cryptocurrencies.
           </p>
 
           <Link href={"/account/buy"} className='flex items-center justify-center bg-[#FDE300] hover:bg-[#FDE300]/80 transition-all duration-200 ease-in-out p-2 py-3 rounded-full gap-x-2 mt-4'>

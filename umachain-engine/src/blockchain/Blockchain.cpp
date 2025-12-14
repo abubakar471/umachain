@@ -188,7 +188,7 @@ bool Blockchain::isValidChain()
 }
 
 // -----------------------------
-//    Save chain to a .dat file
+//    Save chain to a .json file
 // -----------------------------
 void Blockchain::saveToFile()
 {
@@ -207,7 +207,7 @@ void Blockchain::saveToJSON()
 }
 
 // -----------------------------
-//     Load chain from .dat file
+//     Load chain from .json file
 // -----------------------------
 void Blockchain::loadFromFile()
 {
