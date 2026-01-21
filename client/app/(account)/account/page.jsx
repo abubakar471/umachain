@@ -11,7 +11,7 @@ const Accountpage = () => {
   const { user, isLoaded } = useUser();
   return (
     <div className='text-black'>
-      <h1 className='text-white text-3xl font-semibold'>Good Day, <span className='text-[#FDE300]'>{isLoaded && user.fullName}!</span> </h1>
+      <h1 className='text-white text-3xl font-semibold pt-10 md:pt-4'>Good Day, <span className='text-[#FDE300]'>{isLoaded && user.fullName}!</span> </h1>
 
       <div className='mt-10 w-full '>
         <YourBalance />

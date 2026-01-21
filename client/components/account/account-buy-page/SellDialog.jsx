@@ -18,8 +18,8 @@ import { Globe } from 'lucide-react'
 
 
 const SellDialog = () => {
-    const [amount, setAmount] = useState(0);
-    const [amountOnDollars, setAmountOnDollars] = useState(0.0);
+    const [amount, setAmount] = useState("");
+    const [amountOnDollars, setAmountOnDollars] = useState("");
     const [isLoading, setIsLoading] = useState(false);
     const [errMessage, setErrMessage] = useState("");
     const { walletAddress, basePrice, balance, publicKey, privateKey, setWalletInfo } = useWalletStore(state => state);
@@ -117,7 +117,7 @@ const SellDialog = () => {
                         <div className="flex items-center gap-x-2">
                             {/* <Logo /> */}
                             <Input type="number" name="umacoin-amount" placeholder="0.00" className="outline-none ring-0! focus:ring-0! border-0 border-b-2 p-5 indent-0 rounded-b-none border-neutral-500 text-neutral-400"
-                                value={amount}
+                                value={amount || ""}
                                 onChange={e => handleAmountChange(e)}
                             />
                         </div>
@@ -133,7 +133,7 @@ const SellDialog = () => {
                         </div> */}
 
                             <Input type="number" placeholder="0.00" className="outline-none ring-0! focus:ring-0! p-5 indent-0 rounded-b-none border-0 border-b-2 border-neutral-500 text-neutral-400"
-                                value={amountOnDollars}
+                                value={amountOnDollars || ""}
                                 onChange={e => handleAmountChange(e, "DOLLAR")}
                             />
                         </div>
