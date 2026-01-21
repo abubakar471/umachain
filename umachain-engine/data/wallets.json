@@ -7,7 +7,7 @@
     },
     "pubkeys": {
         "WALLET_716470": "-----BEGIN PUBLIC KEY-----\nMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEBdXgE9aFrPOt9N5PiYylPTYcEKMp\nsLSpiN+pYwzE6PqI9QsXab0LnYxLp3ddp/rHx4ze6Tfjbnp1YyMYgc5WKA==\n-----END PUBLIC KEY-----",
-        "WALLET_900386": "-----BEGIN PUBLIC KEY-----\nMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE6tbR15NygFaQ84m2ZQPedNVYbTjw\nrBkasNt9DOEO7CnJokwncVe0Wx1MLFm8PMKpckudhMI744up71Gd532WiA==\n-----END PUBLIC KEY-----"
+        "WALLET_900386": "-----BEGIN PUBLIC KEY-----\nMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEDzh7aqQqZ/DppBA6A+E6ogTyDOCm\nvs53bOc//cJI2svVdGl4za4zy6B7Cp5lH2haYNDmX0+TWfYzcHjqivDLsA==\n-----END PUBLIC KEY-----"
     },
     "users": {
         "user_35uZaxOuLgZIqJVhDHhrdhqjfCs": "WALLET_900386",
